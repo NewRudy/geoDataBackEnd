@@ -1,0 +1,22 @@
+spring:
+  profiles:
+    active: dev
+  mvc:
+    static-path-pattern: /static/**
+  http:
+    multipart:
+      locations: ${resourcePath}
+  web:
+    resources:
+      static-locations: classpath:/META-INF/resources/,classpath:/resources/, classpath:/static/, classpath:/public/, file:${spring.http.multipart.locations}
+  servlet:
+    multipart:
+      enabled: true #默认支持文件上传
+      max-file-size: 15360MB # 最大支持文件大小
+      max-request-size: 15360MB # 最大支持请求大小
+
+server:
+  port: 8999
+  tomcat:
+    uri-encoding: utf-8
+

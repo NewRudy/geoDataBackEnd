@@ -1,0 +1,24 @@
+package entity.base;
+
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import org.springframework.data.annotation.Id;
+
+import java.util.Date;
+
+@Data
+@AllArgsConstructor
+/**
+ * @description: 用户表
+ * @author: Tian
+ * @date: 2021/12/31 10:33
+ */
+public class User {
+    @Id
+    String id;
+    String catalogID;
+    String name;
+    String password;
+    String institution;     // 用户可能了来自不同的机构
+    Date date;
+}
