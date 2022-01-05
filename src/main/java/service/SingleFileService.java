@@ -37,12 +37,12 @@ public class SingleFileService {
     /**
      * @description: 新建文件，如果文件 md5 存在就只是更新 singleFile 的属性
      * @author: Tian
-     * @date: 2022/1/4 15:22
-     * @param	multipartFile
-     * @param	catalogId
-     * @return: java.lang.Boolean
+     * @date: 2022/1/5 9:58
+     * @param multipartFile
+     * @param catalogId
+     * @return: entity.data.SingleFile
      */
-    public Boolean create(MultipartFile multipartFile, String catalogId) throws Exception {
+    public SingleFile create(MultipartFile multipartFile, String catalogId) throws Exception{
         try {
             String md5 = DigestUtils.md5DigestAsHex(multipartFile.getInputStream());
             String name = multipartFile.getName();
@@ -54,10 +54,9 @@ public class SingleFileService {
                 if(FileUtils.uploadSingleFile(multipartFile, uploadPath, singleFile.getId()) && catalogService.updateWithFile(singleFile.getId(), name, catalogId)) {
                     singleFileDao.save(singleFile);
                     logger.info("create a new singleFile success: " + singleFile.toString());
-                    return Boolean.TRUE;
+                    return singleFile;
                 } else {
-                    logger.warning("create a new singleFile fail.");
-                    return Boolean.FALSE;
+                    throw new Exception("create a new singleFile fail.");
                 }
             } else {
                 Map<String, String> nameList = singleFile.getNameList();
@@ -68,11 +67,11 @@ public class SingleFileService {
                 catalogService.updateWithFile(singleFile.getId(), name, catalogId);
                 singleFileDao.save(singleFile);
                 logger.info("create a file with updating singleFile: " + singleFile.toString());
-                return Boolean.TRUE;
+                return singleFile;
             }
         } catch (Exception err) {
             logger.warning("create a file error: " + err.toString());
-            return Boolean.FALSE;
+            throw err;
         }
     }
 
@@ -84,7 +83,7 @@ public class SingleFileService {
      * @param catalogId
      * @return: java.lang.Boolean
      */
-    public Boolean delete(String fileId, String catalogId) throws Exception {
+    public Boolean delete(String fileId, String catalogId){
         try {
             // 更新父目录
             Catalog catalog =  catalogDao.findOneById(catalogId);

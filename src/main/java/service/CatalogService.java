@@ -27,33 +27,33 @@ public class CatalogService {
     /**
      * @description: 新建用户的时候初始化根目录
      * @author: Tian
-     * @date: 2022/1/4 15:27
+     * @date: 2022/1/4 22:42
      * @param user
-     * @return: java.lang.Boolean
+     * @return: entity.base.Catalog
      */
-    public Boolean createWithUser(User user) {
+    public Catalog createWithUser(User user) {
         try {
             List<ChildrenData> children = new ArrayList<>();
             Catalog catalog = new Catalog(user.getCatalogID(), "-1", children, user.getId(), ".", 0, new Date());
             catalogDao.insert(catalog);
             logger.info("create root catalog: " + catalog.toString());
-            return Boolean.TRUE;
+            return catalog;
         } catch (Exception err) {
             logger.warning("create root catalog error: " + err.toString());
-            return Boolean.FALSE;
+            throw err;
         }
     }
 
     /**
      * @description: 新建文件夹: 需要创建一个新的文件夹实例，并且更新父文件夹的属性
      * @author: Tian
-     * @date: 2022/1/4 15:27
+     * @date: 2022/1/4 22:42
      * @param userId
      * @param parentId
      * @param name
-     * @return: java.lang.Boolean
+     * @return: entity.base.Catalog
      */
-    public Boolean create(String userId, String parentId, String name) {
+    public Catalog create(String userId, String parentId, String name) {
         try {
             List <ChildrenData> children = new ArrayList<>();
             User user = userDao.findOneById(userId);
@@ -64,10 +64,10 @@ public class CatalogService {
             parentCatalog.getChildren().add(childrenData);
             catalogDao.save(parentCatalog);
             logger.info("create new catalog: " + catalog.toString());
-            return Boolean.TRUE;
+            return catalog;
         } catch (Exception err) {
             logger.warning("create new catalog error: " + err.toString());
-            return Boolean.FALSE;
+            throw err;
         }
     }
 
@@ -80,7 +80,7 @@ public class CatalogService {
      * @param catalogId
      * @return: java.lang.Boolean
      */
-    public Boolean updateWithFile(String fileId, String fileName, String catalogId) throws Exception {
+    public Boolean updateWithFile(String fileId, String fileName, String catalogId){
         try {
             Catalog catalog = catalogDao.findOneById(catalogId);
             if(catalog != null) {
@@ -93,7 +93,8 @@ public class CatalogService {
                 throw new Exception(String.format("catalog %s is wrong.", catalogId.toString()));
             }
         } catch (Exception err) {
-            throw err;
+            logger.warning("update with file error: " + err.toString());
+            return Boolean.FALSE;
         }
     }
 

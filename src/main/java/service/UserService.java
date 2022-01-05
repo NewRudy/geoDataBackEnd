@@ -32,16 +32,16 @@ public class UserService {
      * @param institution
      * @return: java.lang.Boolean
      */
-    public Boolean create(String name, String password, String institution) throws Exception{
+    public User create(String name, String password, String institution) throws Exception{
         try{
             User user = new User(SnowflakeIdWorker.generateId2(), SnowflakeIdWorker.generateId2(), name, BASE64.encryptBASE64(password.getBytes()), institution, new Date());
             userDao.insert(user);
             catalogService.createWithUser(user);
             logger.info("create user: " + user.toString());
-            return Boolean.TRUE;
+            return user;
         } catch (Exception err) {
             logger.warning("create user error: " + err.toString());
-            return Boolean.FALSE;
+            throw err;
         }
     }
 
@@ -53,19 +53,16 @@ public class UserService {
      * @param password
      * @return: java.lang.Boolean
      */
-    public Boolean create(String name, String password) throws Exception{
+    public User create(String name, String password) throws Exception{
         try{
             User user = new User(SnowflakeIdWorker.generateId2(), SnowflakeIdWorker.generateId2(), name, BASE64.encryptBASE64(password.getBytes()), "", new Date());
             userDao.insert(user);
             catalogService.createWithUser(user);
             logger.info("create user: " + user.toString());
-            return Boolean.TRUE;
+            return user;
         } catch (Exception err) {
             logger.warning("create user error: " + err.toString());
-            return Boolean.FALSE;
+            throw err;
         }
     }
-
-
-
 }
