@@ -18,7 +18,7 @@ import java.util.logging.Logger;
 
 @Api(tags = "用户登录注册")
 @RestController
-@RequestMapping(value = "/users")
+@RequestMapping(value = "/user")
 @Slf4j
 /**
  * @description:
@@ -40,7 +40,7 @@ public class UserController {
      */
     @ApiOperation(value = "新建用户")
     @RequestMapping(method = RequestMethod.POST)
-    public BaseResponse register(@RequestBody UserDto userDto) throws Exception {
+    public BaseResponse register(@RequestBody UserDto userDto){
         try {
             User user;
             if(userDto.getInstitution() == null) {
@@ -49,18 +49,26 @@ public class UserController {
                 user = userService.create(userDto.getName(), userDto.getPassword(), userDto.getInstitution());
             }
             return new BaseResponse(DefaultStatus.SUCCESS, "新建用户成功", user);
-            // BaseResponse<String> response = new BaseResponse<>();
-            // response.setCode(DefaultStatus.SUCCESS);
-            // response.setMessage("新建用户成功");
-            // response.setData(user.toString());
-            // return response;
         } catch (Exception err) {
             logger.warning("/users post error: " + err.toString());
             return new BaseResponse(DefaultStatus.FAILURE, "新建用户失败");
-            // BaseResponse<String> response = new BaseResponse<>();
-            // response.setCode(DefaultStatus.FAILURE);
-            // response.setMessage("新建用户失败");
-            // return response;
+        }
+    }
+
+    @ApiOperation(value = "用户登录")
+    @RequestMapping(value = "/login", method = RequestMethod.POST)
+    public BaseResponse login(@RequestBody UserDto userDto) {
+        try {
+            User user;
+            if(userDto.getInstitution() == null) {
+                user = userService.login(userDto.getName(), userDto.getPassword());
+            } else {
+                user = userService.login(userDto.getName(), userDto.getPassword(), userDto.getInstitution());
+            }
+            return new BaseResponse(DefaultStatus.SUCCESS, "新建用户成功", user);
+        } catch (Exception err) {
+            logger.warning("/users post error: " + err.toString());
+            return new BaseResponse(DefaultStatus.FAILURE, "新建用户失败");
         }
     }
 }
