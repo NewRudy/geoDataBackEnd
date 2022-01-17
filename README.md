@@ -20,7 +20,77 @@
 
 目前工作：现在只考虑数据存放在单个服务器上的情况，数据利用系统自带的文件系统管理，数据元数据及用户信息存储在 Mongo 数据库中，数据库设计如下：
 
-![数据管理](http://111.229.14.128:9001/wutian/1641384988_5pWw5o2u566h55CG.png)
+![数据管理](./src/main/resources/image/1641384988_5pWw5o2u566h55CG.png)
 
 <div align='center'>数据管理设计</div>
+
+## 表设计
+
+#### base
+
+Base: User、Catalog
+
+```java
+public class User {
+    @Id
+    String id;
+    String catalogID;
+    String name;
+    String password;
+    String institution;     // 用户可能了来自不同的机构
+    Date date;
+}
+```
+
+<div align='center'>User</div>
+
+```java
+public class ChildrenData {
+    String type;    // file or folder
+    String name;
+    String id;
+}
+
+public class Catalog {
+    @Id
+    String id;
+    String parentId;
+    List<ChildrenData> children;
+
+    String userId;
+    String name;
+    int level;
+    Date date;
+}
+```
+
+<div align='center'>Catalog</div>
+
+#### data
+
+data: singleFile、PublicData
+
+```java
+public class SingleFile {
+    @Id
+    String id;
+    String md5;
+    Map<String, String> nameList;
+    int parentNumber;   // 被指向的次数，刚开始次数是 1，当次数归 0 的时候删除文件
+    int size;
+    int useNumber;      // 每次访问次数加一，某段时间内使用次数到达多少次，将其认为资源
+    Date date;
+    Boolean isResource;
+}
+```
+
+<div align='center'>singleFile</div>
+
+```java
+public class PublicData extends SingleFile {
+    String name;
+}
+```
+
+<div align='center'>publicData</div>
 
