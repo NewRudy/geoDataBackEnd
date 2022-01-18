@@ -39,7 +39,7 @@ public class CatalogService {
     public Catalog createWithUser(User user) {
         try {
             List<ChildrenData> children = new ArrayList<>();
-            Catalog catalog = new Catalog(user.getCatalogID(), "-1", children, user.getId(), ".", 0, new Date());
+            Catalog catalog = new Catalog(user.getCatalogId(), "-1", children, user.getId(), ".", 0, new Date());
             catalogDao.insert(catalog);
             logger.info("create root catalog: " + catalog.toString());
             return catalog;

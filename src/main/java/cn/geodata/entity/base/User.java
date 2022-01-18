@@ -16,7 +16,7 @@ import java.util.Date;
 public class User {
     @Id
     String id;
-    String catalogID;
+    String catalogId;
     String name;
     String password;
     String institution;     // 用户可能了来自不同的机构
