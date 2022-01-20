@@ -65,7 +65,7 @@ public class CatalogService {
             Catalog parentCatalog = catalogDao.findOneById(parentId);
             Catalog catalog = new Catalog(SnowflakeIdWorker.generateId2(), parentId, children, user.getId(), name, parentCatalog.getLevel() + 1, new Date());
             catalogDao.insert(catalog);
-            ChildrenData childrenData = new ChildrenData("folder", name, SnowflakeIdWorker.generateId2());
+            ChildrenData childrenData = new ChildrenData("folder", name,new Date(), "", 0, SnowflakeIdWorker.generateId2());
             parentCatalog.getChildren().add(childrenData);
             catalogDao.save(parentCatalog);
             logger.info("create new catalog: " + catalog.toString());
@@ -85,12 +85,12 @@ public class CatalogService {
      * @param catalogId
      * @return: java.lang.Boolean
      */
-    public Boolean updateWithFile(String fileId, String fileName, String catalogId){
+    public Boolean updateWithFile(String fileId, String fileName, String catalogId, String description){
         try {
             Catalog catalog = catalogDao.findOneById(catalogId);
             if(catalog != null) {
                 List<ChildrenData> childrenData = catalog.getChildren();
-                childrenData.add(new ChildrenData("file", fileName, fileId));
+                childrenData.add(new ChildrenData("file", fileName,new Date(), description, 0, fileId));
                 catalog.setChildren(childrenData);
                 catalogDao.save(catalog);
                 return Boolean.TRUE;

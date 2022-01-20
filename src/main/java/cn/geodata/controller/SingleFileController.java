@@ -10,8 +10,9 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import cn.geodata.service.SingleFileService;
 import cn.geodata.utils.resultUtils.BaseResponse;
-import cn.geodata.utils.resultUtils.DefaultStatus;
+import cn.geodata.enums.ResultStatusEnum;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.logging.Logger;
 
 @Api(value = "文件管理")
@@ -37,23 +38,33 @@ public class SingleFileController {
      * @author: Tian
      * @date: 2022/1/5 10:05
      * @param multipartFile
-     * @param name
+     * @param id
      * @return: utils.resultUtils.BaseResponse
      */
     @ApiOperation("上传文件")
     @RequestMapping(method = RequestMethod.POST)
-    public BaseResponse create(@RequestParam("data") MultipartFile multipartFile, @RequestParam("name") String name) {
+    public BaseResponse create(@RequestParam("data") MultipartFile multipartFile,
+                               @RequestParam("id") String id,
+                               @RequestParam("name") String name,
+                               @RequestParam(value = "description", required = false) String description
+                               ) {
         try {
-            SingleFile singleFile = singleFileService.create(multipartFile, name);
+            SingleFile singleFile = singleFileService.create(multipartFile, id, name, description);
             if(singleFile != null) {
                 logger.info("/file post success: " + singleFile.toString());
-                return new BaseResponse(DefaultStatus.SUCCESS, "上传文件成功", singleFile.toString());
+                return new BaseResponse(ResultStatusEnum.SUCCESS, "上传文件成功", singleFile);
             }
             throw new Exception("singleFile is null.");
         } catch (Exception err) {
             logger.warning("/file post error: " + err.toString());
-            return new BaseResponse(DefaultStatus.FAILURE, "上传文件失败");
+            return new BaseResponse(ResultStatusEnum.FAILURE, "上传文件失败");
         }
+    }
+
+    @ApiOperation("下载文件")
+    @RequestMapping(value = "/download", method = RequestMethod.GET)
+    public void download(@RequestParam("id") String id, @RequestParam("catalogId") String catalogId, HttpServletResponse response, @RequestParam(value = "type", required = false) String type) throws Exception {
+        singleFileService.download(id, catalogId, response, type);
     }
 
     /**
@@ -66,18 +77,18 @@ public class SingleFileController {
      */
     @ApiOperation("删除文件")
     @RequestMapping(method = RequestMethod.DELETE)
-    public BaseResponse deleteById(@RequestParam("fileId") String singleFileId, @RequestParam("catalogId") String catalogId) {
+    public BaseResponse deleteById(@RequestParam("id") String singleFileId, @RequestParam("catalogId") String catalogId) {
         try {
             if(singleFileService.delete(singleFileId, catalogId)) {
                 logger.info(String.format("/file delete success: singleFileId: %s, catalogId: %s", singleFileId.toString(), catalogId.toString()) );
-                return new BaseResponse(DefaultStatus.SUCCESS, "删除文件成功");
+                return new BaseResponse(ResultStatusEnum.SUCCESS, "删除文件成功");
             } else {
                 logger.warning(String.format("/file delete failed: singleFileId: %s, catalogId: %s, method return false", singleFileId.toString(), catalogId.toString()) );
-                return new BaseResponse(DefaultStatus.FAILURE, "删除文件失败");
+                return new BaseResponse(ResultStatusEnum.FAILURE, "删除文件失败");
             }
         } catch (Exception err) {
             logger.warning("/file delete error: " + err.toString());
-            return new BaseResponse(DefaultStatus.FAILURE, "删除文件失败");
+            return new BaseResponse(ResultStatusEnum.FAILURE, "删除文件失败");
         }
     }
 
@@ -95,14 +106,14 @@ public class SingleFileController {
             SingleFile singleFile = singleFileDao.findOneById(singleFileId);
             if(singleFile != null) {
                 logger.info("/file get success: " + singleFileId);
-                return new BaseResponse(DefaultStatus.SUCCESS, "查询文件成功", singleFile.toString());
+                return new BaseResponse(ResultStatusEnum.SUCCESS, "查询文件成功", singleFile);
             } else {
                 logger.warning(String.format("/file get failed: %s is not found", singleFileId));
-                return new BaseResponse(DefaultStatus.NOT_FOUND, "文件id不存在");
+                return new BaseResponse(ResultStatusEnum.NOT_FOUND, "文件id不存在");
             }
         } catch (Exception err) {
             logger.warning("/file get error: " + err.toString());
-            return new BaseResponse(DefaultStatus.FAILURE, "查询文件失败");
+            return new BaseResponse(ResultStatusEnum.FAILURE, "查询文件失败");
         }
     }
 }

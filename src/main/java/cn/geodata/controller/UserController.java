@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 import cn.geodata.service.UserService;
 import cn.geodata.utils.resultUtils.BaseResponse;
-import cn.geodata.utils.resultUtils.DefaultStatus;
+import cn.geodata.enums.ResultStatusEnum;
 
 import java.util.logging.Logger;
 
@@ -48,10 +48,10 @@ public class UserController {
             } else {
                 user = userService.create(userDto.getName(), userDto.getPassword(), userDto.getInstitution());
             }
-            return new BaseResponse(DefaultStatus.SUCCESS, "新建用户成功", user);
+            return new BaseResponse(ResultStatusEnum.SUCCESS, "新建用户成功", user);
         } catch (Exception err) {
             logger.warning("/users post error: " + err.toString());
-            return new BaseResponse(DefaultStatus.FAILURE, "新建用户失败");
+            return new BaseResponse(ResultStatusEnum.FAILURE, "新建用户失败");
         }
     }
 
@@ -65,10 +65,10 @@ public class UserController {
             } else {
                 user = userService.login(userDto.getName(), userDto.getPassword(), userDto.getInstitution());
             }
-            return new BaseResponse(DefaultStatus.SUCCESS, "新建用户成功", user);
+            return new BaseResponse(ResultStatusEnum.SUCCESS, "新建用户成功", user);
         } catch (Exception err) {
             logger.warning("/users post error: " + err.toString());
-            return new BaseResponse(DefaultStatus.FAILURE, "新建用户失败");
+            return new BaseResponse(ResultStatusEnum.FAILURE, "新建用户失败");
         }
     }
 }

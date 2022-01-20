@@ -1,6 +1,8 @@
-package cn.geodata.utils.resultUtils;
+package cn.geodata.enums;
 
-public enum DefaultStatus implements StatusCode {
+import cn.geodata.utils.resultUtils.StatusCode;
+
+public enum ResultStatusEnum implements StatusCode {
 
     SUCCESS(0, "Operation Success"),
     FAILURE(1, "Application internal error"),
@@ -12,7 +14,7 @@ public enum DefaultStatus implements StatusCode {
     private final int code;
     private final String message;
 
-    DefaultStatus(int code, String message) {
+    ResultStatusEnum(int code, String message) {
         this.code = code;
         this.message = message;
     }

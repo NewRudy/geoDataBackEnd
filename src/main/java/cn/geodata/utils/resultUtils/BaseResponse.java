@@ -2,7 +2,7 @@ package cn.geodata.utils.resultUtils;
 
 import java.io.Serializable;
 
-import static cn.geodata.utils.resultUtils.DefaultStatus.SUCCESS;
+import static cn.geodata.enums.ResultStatusEnum.SUCCESS;
 
 public final class BaseResponse<T> implements Serializable {
 
