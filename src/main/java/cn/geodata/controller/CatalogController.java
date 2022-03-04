@@ -2,6 +2,7 @@ package cn.geodata.controller;
 
 import cn.geodata.dao.CatalogDao;
 import cn.geodata.dto.CatalogDto;
+import cn.geodata.dto.PageInfoDto;
 import cn.geodata.entity.base.Catalog;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
@@ -72,6 +73,13 @@ public class CatalogController {
         }
     }
 
+    /**
+     * @description:
+     * @author: Tian
+     * @date: 2022/3/4 11:00
+     * @param catalogId
+     * @return: cn.geodata.utils.resultUtils.BaseResponse
+     */
     @ApiOperation(value = "根据目录 id 查询目录")
     @RequestMapping(method = RequestMethod.GET)
     public  BaseResponse findById(@RequestParam("id") String catalogId) {
@@ -83,7 +91,40 @@ public class CatalogController {
                 return new BaseResponse(ResultStatusEnum.NOT_FOUND, "该目录不存在");
             }
         } catch (Exception err) {
-            logger.warning("/catalog get error: " + err.toString());
+            logger.warning("/catalog get by id error: " + err.toString());
+            return new BaseResponse(ResultStatusEnum.FAILURE, "查询目录失败");
+        }
+    }
+
+    @ApiOperation(value = "根据 id 查询目录，并且对 children 进行分页")
+    @RequestMapping(value = "/findByIdAndPage", method = RequestMethod.POST)
+    public BaseResponse findByIdAndPage(@RequestParam("id") String catalogId, @RequestBody PageInfoDto pageInfoDto) {
+        try {
+            Catalog catalog = catalogService.findByMultiItem(catalogId, pageInfoDto);
+            if(catalog != null) {
+                return new BaseResponse(ResultStatusEnum.SUCCESS, "查询目录成功", catalog);
+            } else{
+                return new BaseResponse(ResultStatusEnum.NOT_FOUND, "该目录不存在");
+            }
+        } catch (Exception err) {
+            logger.warning("/catalog get by id and page error: " + err.toString());
+            return new BaseResponse(ResultStatusEnum.FAILURE, "查询目录失败");
+        }
+    }
+
+    @ApiOperation(value = "根据 searchContent 查询目录，并且对 children 进行分页")
+    @RequestMapping(value = "findByItems", method = RequestMethod.POST)
+    public BaseResponse findByItems(@RequestParam("id") String catalogId,  @RequestBody PageInfoDto pageInfoDto,
+                                                 @RequestParam("searchItem") String searchItem, @RequestParam("searchContent") String searchContent) {
+        try {
+            Catalog catalog = catalogService.findByMultiItem(catalogId, pageInfoDto, searchItem, searchContent);
+            if(catalog != null) {
+                return new BaseResponse(ResultStatusEnum.SUCCESS, "查询目录成功", catalog);
+            } else{
+                return new BaseResponse(ResultStatusEnum.NOT_FOUND, "该目录不存在");
+            }
+        } catch (Exception err) {
+            logger.warning("/catalog get by id and page error: " + err.toString());
             return new BaseResponse(ResultStatusEnum.FAILURE, "查询目录失败");
         }
     }

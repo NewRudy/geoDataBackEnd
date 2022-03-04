@@ -1,6 +1,7 @@
 package cn.geodata.service;
 
 import cn.geodata.dao.UserDao;
+import cn.geodata.dto.UserDto;
 import cn.geodata.entity.base.User;
 import cn.geodata.utils.JudgeUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -33,6 +34,26 @@ public class UserService {
         JudgeUtils.isNullString("password", password);
     }
 
+    public User create(UserDto userDto) throws  Exception {
+        try {
+            nullJudge(userDto.getName(), userDto.getPassword());
+            if(userDto.getEmail() == null) {
+                userDto.setEmail("");
+            }
+            if(userDto.getInstitution() == null) {
+                userDto.setInstitution("");
+            }
+            User user = new User(SnowflakeIdWorker.generateId2(), SnowflakeIdWorker.generateId2(), userDto.getName(), BASE64.encryptBASE64(userDto.getPassword().getBytes()), userDto.getEmail(), userDto.getInstitution(), new Date());
+            userDao.insert(user);
+            catalogService.createWithUser(user);
+            logger.info("create user: " + user.toString());
+            return user;
+        }  catch (Exception err) {
+            logger.warning("create user error: " + err.toString());
+            throw err;
+        }
+    }
+
     /**
      * @description:
      * @author: Tian
@@ -47,7 +68,7 @@ public class UserService {
             if(userDao.findUserByName(name) != null) {
                 new Error("该用户名已经注册");
             }
-            User user = new User(SnowflakeIdWorker.generateId2(), SnowflakeIdWorker.generateId2(), name, BASE64.encryptBASE64(password.getBytes()), "", new Date());
+            User user = new User(SnowflakeIdWorker.generateId2(), SnowflakeIdWorker.generateId2(), name, BASE64.encryptBASE64(password.getBytes()), "", "", new Date());
             userDao.insert(user);
             catalogService.createWithUser(user);
             logger.info("create user: " + user.toString());
@@ -67,13 +88,13 @@ public class UserService {
      * @param institution
      * @return: java.lang.Boolean
      */
-    public User create(String name, String password, String institution) throws Exception{
+    public User create(String name, String password,String email, String institution) throws Exception{
         try{
             nullJudge(name, password);
             if(userDao.findUserByNameAndInstitution(name, institution) != null) {
                 new Error("该用户名及机构已经注册");
             }
-            User user = new User(SnowflakeIdWorker.generateId2(), SnowflakeIdWorker.generateId2(), name, BASE64.encryptBASE64(password.getBytes()), institution, new Date());
+            User user = new User(SnowflakeIdWorker.generateId2(), SnowflakeIdWorker.generateId2(), name, BASE64.encryptBASE64(password.getBytes()), email, institution, new Date());
             userDao.insert(user);
             catalogService.createWithUser(user);
             logger.info("create user: " + user.toString());

@@ -43,11 +43,7 @@ public class UserController {
     public BaseResponse register(@RequestBody UserDto userDto){
         try {
             User user;
-            if(userDto.getInstitution() == null) {
-                user = userService.create(userDto.getName(), userDto.getPassword());
-            } else {
-                user = userService.create(userDto.getName(), userDto.getPassword(), userDto.getInstitution());
-            }
+            user = userService.create(userDto);
             return new BaseResponse(ResultStatusEnum.SUCCESS, "新建用户成功", user);
         } catch (Exception err) {
             logger.warning("/users post error: " + err.toString());

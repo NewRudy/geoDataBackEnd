@@ -19,6 +19,7 @@ public class User {
     String catalogId;
     String name;
     String password;
+    String email;
     String institution;     // 用户可能了来自不同的机构
     Date date;
 }
