@@ -6,6 +6,7 @@ import cn.geodata.dto.PageInfoDto;
 import cn.geodata.entity.base.Catalog;
 import cn.geodata.entity.base.ChildrenData;
 import cn.geodata.entity.base.User;
+import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import cn.geodata.utils.SnowflakeIdWorker;
@@ -43,7 +44,7 @@ public class CatalogService {
     public Catalog createWithUser(User user) {
         try {
             List<ChildrenData> children = new ArrayList<>();
-            Catalog catalog = new Catalog(user.getCatalogId(), "-1", children, user.getId(), ".", 0, new Date());
+            Catalog catalog = new Catalog(user.getCatalogId(), "-1", children, 0, user.getId(), ".", 0, new Date());
             catalogDao.insert(catalog);
             logger.info("create root catalog: " + catalog.toString());
             return catalog;
@@ -68,7 +69,7 @@ public class CatalogService {
             User user = userDao.findOneById(userId);
             Catalog parentCatalog = catalogDao.findOneById(parentId);
             String id = SnowflakeIdWorker.generateId2();
-            Catalog catalog = new Catalog(id, parentId, children, user.getId(), name, parentCatalog.getLevel() + 1, new Date());
+            Catalog catalog = new Catalog(id, parentId, children, 0, user.getId(), name, parentCatalog.getLevel() + 1, new Date());
             catalogDao.insert(catalog);
             ChildrenData childrenData = new ChildrenData("folder", name,new Date(), "", 0, id);
             parentCatalog.getChildren().add(childrenData);
@@ -91,35 +92,89 @@ public class CatalogService {
     public Boolean delete(String id) {
        try{
            Catalog catalog = catalogDao.findOneById(id);
-
+           if(catalog == null) {
+               return Boolean.FALSE;
+           }
            // 更新父目录
            Catalog parentCatalog = catalogDao.findOneById(catalog.getParentId());
+
            Iterator<ChildrenData> iterator = parentCatalog.getChildren().iterator();
            while(iterator.hasNext()) {
                ChildrenData childrenData = iterator.next();
-               if(childrenData.getId() == catalog.getId()) {
+               if(childrenData.getId().equals(catalog.getId())) {
                    iterator.remove();
                    break;
                }
            }
+           // parentCatalog.setChildren(Lists.newArrayList(iterator));
+           parentCatalog.setTotal(parentCatalog.getChildren().size());
+           catalogDao.save(parentCatalog);
+
 
            // 更新子目录（判断子文件和文件夹的指针数目，如果为 0 了就代表该文件没用了，需要删除）
            Iterator<ChildrenData> childrenDataIterator = catalog.getChildren().iterator();
            while (childrenDataIterator.hasNext()) {
                ChildrenData childrenData = childrenDataIterator.next();
-               if(childrenData.getType() == "Folder") {
+               if(childrenData.getType().equals("Folder")) {
                    delete(childrenData.getId());
                } else {
                    singleFileService.delete(childrenData.getId(), catalog.getId());
                }
            }
-
-           logger.info("delete catalog: " + catalog.toString());
+           if(catalogDao.removeCatalogById(id)) {
+               logger.info("delete catalog: " + catalog.toString());
+           } else {
+               logger.info("delete catalog entity error.");
+           }
            return Boolean.TRUE;
        } catch (Exception err) {
            logger.warning("delete catalog error: " + err.toString());
            return Boolean.FALSE;
        }
+    }
+
+    /**
+     * @description: 修改目录的值，只能修改名字和描述，type = name || description
+     * @author: Tian
+     * @date: 2022/3/11 15:20
+     * @param parentId
+     * @param id
+     * @param value
+     * @param type
+     * @return: java.lang.Boolean
+     */
+    public Boolean updateCatalog(String parentId, String id, String value, String type) {
+        try{
+            Catalog parentCatalog = catalogDao.findOneById(parentId);
+            if(parentCatalog == null) {
+                logger.warning("update catalog name with wrong parent id: " + parentId);
+                return Boolean.FALSE;
+            }
+            Boolean flag = Boolean.FALSE;
+            Iterator<ChildrenData> iterator = parentCatalog.getChildren().iterator();
+            while (iterator.hasNext()) {
+                ChildrenData temp = iterator.next();
+                if (temp.getId().equals(id)) {
+                    if(type.equals("name")) {
+                        temp.setName(value);
+                    } else if(type.equals("description")) {
+                        temp.setDescription(value);
+                    }
+                    catalogDao.save(parentCatalog);
+                    flag = Boolean.TRUE;
+                    break;
+                }
+            }
+            if(flag) {
+                return Boolean.TRUE;
+            } else {
+                logger.warning("update catalog name with wrong id: " + parentId);
+                return Boolean.FALSE;
+            }
+        } catch (Exception err) {
+            logger.warning("update catalog name error: " + err.toString());
+            throw err;
+        }
     }
 
     /**
@@ -138,6 +193,7 @@ public class CatalogService {
                 List<ChildrenData> childrenData = catalog.getChildren();
                 childrenData.add(new ChildrenData("file", fileName,new Date(), description, 0, fileId));
                 catalog.setChildren(childrenData);
+                catalog.setTotal(childrenData.size());
                 catalogDao.save(catalog);
                 return Boolean.TRUE;
             } else {
@@ -164,6 +220,7 @@ public class CatalogService {
                 new Error(catalogId + " 没有对应的实体");
             }
             ChildrenData[] arr = catalog.getChildren().toArray(new ChildrenData[catalog.getChildren().size()]);
+            catalog.setTotal(arr.length);
             // 分页
             int start = (pageInfoDto.getPage() - 1) * pageInfoDto.getPageSize();
             int end = (start + pageInfoDto.getPageSize()) > arr.length ? arr.length : start + pageInfoDto.getPageSize();
@@ -202,6 +259,7 @@ public class CatalogService {
                 new Error(catalogId + " 没有对应的实体");
             }
             List<ChildrenData> tempList = catalog.getChildren();
+            catalog.setTotal(tempList.size());
             // 搜索
             List<ChildrenData> list = new ArrayList<>();
             switch (searchItem) {

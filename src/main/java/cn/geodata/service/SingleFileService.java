@@ -6,6 +6,7 @@ import cn.geodata.entity.base.Catalog;
 import cn.geodata.entity.base.ChildrenData;
 import cn.geodata.entity.data.SingleFile;
 import cn.geodata.enums.ContentTypeEnum;
+import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -181,11 +182,12 @@ public class SingleFileService {
             Iterator<ChildrenData> iterator = children.iterator();
             while(iterator.hasNext()) {
                 ChildrenData temp = iterator.next();
-                if(temp.getId() == fileId) {
+                if(temp.getId().equals(fileId)) {
                     iterator.remove();
                     break;
                 }
             }
+            catalogDao.save(catalog);
 
             // 更新文件，如果 parentNumber 为 0 则删除文件
             SingleFile singleFile = singleFileDao.findOneById(fileId);

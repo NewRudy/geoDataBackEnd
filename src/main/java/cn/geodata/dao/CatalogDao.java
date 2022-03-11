@@ -5,4 +5,5 @@ import org.springframework.data.mongodb.repository.MongoRepository;
 
 public interface CatalogDao extends MongoRepository<Catalog, String> {
     Catalog findOneById(String id);
+    Boolean removeCatalogById(String id);
 }

@@ -73,6 +73,10 @@ public class CatalogController {
         }
     }
 
+    // @ApiOperation(value = "修改目录的值")
+    // @RequestMapping(method = "/update", method = RequestMethod.POST)
+    // public  BaseResponse update(@RequestParam("catalogId") String catalogId, @RequestParam("id") String id, @RequestParam("name") String name, @RequestParam)
+
     /**
      * @description:
      * @author: Tian
