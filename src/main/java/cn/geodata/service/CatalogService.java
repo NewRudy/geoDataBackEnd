@@ -6,6 +6,7 @@ import cn.geodata.dto.PageInfoDto;
 import cn.geodata.entity.base.Catalog;
 import cn.geodata.entity.base.ChildrenData;
 import cn.geodata.entity.base.User;
+import cn.geodata.utils.CompareUtil;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,7 +45,7 @@ public class CatalogService {
     public Catalog createWithUser(User user) {
         try {
             List<ChildrenData> children = new ArrayList<>();
-            Catalog catalog = new Catalog(user.getCatalogId(), "-1", children, 0, user.getId(), ".", 0, new Date());
+            Catalog catalog = new Catalog(user.getCatalogId(), "-1", children, 0, user.getId(), 0, new Date());
             catalogDao.insert(catalog);
             logger.info("create root catalog: " + catalog.toString());
             return catalog;
@@ -69,7 +70,7 @@ public class CatalogService {
             User user = userDao.findOneById(userId);
             Catalog parentCatalog = catalogDao.findOneById(parentId);
             String id = SnowflakeIdWorker.generateId2();
-            Catalog catalog = new Catalog(id, parentId, children, 0, user.getId(), name, parentCatalog.getLevel() + 1, new Date());
+            Catalog catalog = new Catalog(id, parentId, children, 0, user.getId(), parentCatalog.getLevel() + 1, new Date());
             catalogDao.insert(catalog);
             ChildrenData childrenData = new ChildrenData("folder", name,new Date(), "", 0, id);
             parentCatalog.getChildren().add(childrenData);
@@ -121,11 +122,12 @@ public class CatalogService {
                    singleFileService.delete(childrenData.getId(), catalog.getId());
                }
            }
-           if(catalogDao.removeCatalogById(id)) {
-               logger.info("delete catalog: " + catalog.toString());
-           } else {
-               logger.info("delete catalog entity error.");
-           }
+           catalogDao.deleteById(id);
+           // if(catalogDao.removeCatalogById(id)) {
+           //     logger.info("delete catalog: " + catalog.toString());
+           // } else {
+           //     logger.info("delete catalog entity error.");
+           // }
            return Boolean.TRUE;
        } catch (Exception err) {
            logger.warning("delete catalog error: " + err.toString());
@@ -219,32 +221,39 @@ public class CatalogService {
             if(catalog == null) {
                 new Error(catalogId + " 没有对应的实体");
             }
-            ChildrenData[] arr = catalog.getChildren().toArray(new ChildrenData[catalog.getChildren().size()]);
-            catalog.setTotal(arr.length);
-            // 分页
-            int start = (pageInfoDto.getPage() - 1) * pageInfoDto.getPageSize();
-            int end = (start + pageInfoDto.getPageSize()) > arr.length ? arr.length : start + pageInfoDto.getPageSize();
-            if(start > arr.length - 1) {
-                return catalog;
-            }
-            ChildrenData[] temp = Arrays.copyOfRange(arr, start, end);
-            List<ChildrenData> res = Arrays.stream(temp).collect(Collectors.toList());
+
+            List<ChildrenData> list = catalog.getChildren();
             // 排序
-            Collections.sort(res, ((o1, o2) -> {
+            Collections.sort(list, ((o1, o2) -> {
                 switch (pageInfoDto.getSortField()) {
                     case "name":
-                        return o1.getName().compareTo(o2.getName()) >= 0 ? 1: -1;
+                        return CompareUtil.compareStringWithHanZi(o1.getName(), o2.getName()) >= 0 ? 1: -1;
                     case "type":
-                        return o1.getType().compareTo(o2.getType()) >= 0 ? 1: -1;
+                        return CompareUtil.compareStringWithHanZi(o1.getType(), o2.getType()) >= 0 ? 1: -1;
                     case "clicks":
                         return o1.getClicks() >= o2.getClicks() ? 1: -1;
                     default:
                         return o1.getDate().compareTo(o2.getDate()) >= 0 ? 1: -1;
                 }
             }));
-            if(pageInfoDto.getAsc()) {
-                Collections.reverse(res);
+            if(!pageInfoDto.getAsc()) {
+                Collections.reverse(list);
             }
+            catalog.setTotal(list.size());
+
+            // 分页
+            ChildrenData[] arr = list.toArray(new ChildrenData[list.size()]);
+            catalog.setTotal(arr.length);
+            int start = (pageInfoDto.getPage() - 1) * pageInfoDto.getPageSize();
+            int end = (start + pageInfoDto.getPageSize()) > arr.length ? arr.length : start + pageInfoDto.getPageSize();
+            if(start > arr.length - 1) {
+                catalog.setChildren(null);
+                catalog.setTotal(0);
+                return catalog;
+            }
+            ChildrenData[] temp = Arrays.copyOfRange(arr, start, end);
+            List<ChildrenData> res = Arrays.stream(temp).collect(Collectors.toList());
+
             catalog.setChildren(res);
             return  catalog;
         } catch(Exception error) {
@@ -260,7 +269,7 @@ public class CatalogService {
             }
             List<ChildrenData> tempList = catalog.getChildren();
             catalog.setTotal(tempList.size());
-            // 搜索
+            // 查找
             List<ChildrenData> list = new ArrayList<>();
             switch (searchItem) {
                 case "name":
@@ -270,31 +279,37 @@ public class CatalogService {
                     list = tempList.stream().filter(o -> o.getName() != "" && o.getDescription().contains(searchContent)).collect(Collectors.toList());
                     break;
             }
-            ChildrenData[] arr = list.toArray(new ChildrenData[list.size()]);
+            // 排序
+            Collections.sort(list, ((o1, o2) -> {
+                switch (pageInfoDto.getSortField()) {
+                    case "name":
+                        return CompareUtil.compareStringWithHanZi(o1.getName(), o2.getName()) >= 0 ? 1: -1;
+                    case "type":
+                        return CompareUtil.compareStringWithHanZi(o1.getType(), o2.getType()) >= 0 ? 1: -1;
+                    case "clicks":
+                        return o1.getClicks() >= o2.getClicks() ? 1: -1;
+                    default:
+                        return o1.getDate().compareTo(o2.getDate()) >= 0 ? 1: -1;
+                }
+            }));
+            if(!pageInfoDto.getAsc()) {
+                Collections.reverse(list);
+            }
+            catalog.setTotal(list.size());
             // 分页
+            ChildrenData[] arr = list.toArray(new ChildrenData[list.size()]);
             int start = (pageInfoDto.getPage() - 1) * pageInfoDto.getPageSize();
             int end = (start + pageInfoDto.getPageSize()) > arr.length ? arr.length : start + pageInfoDto.getPageSize();
             if(start > arr.length - 1) {
+                catalog.setChildren(null);
+                catalog.setTotal(0);
                 return catalog;
             }
             ChildrenData[] temp = Arrays.copyOfRange(arr, start, end);
             List<ChildrenData> res = Arrays.stream(temp).collect(Collectors.toList());
-            Collections.sort(res, ((o1, o2) -> {
-                switch (pageInfoDto.getSortField()) {
-                    case "name":
-                        return o1.getName().compareTo(o2.getName()) >= 0 ? 1: -1;
-                    case "type":
-                        return o1.getType().compareTo(o2.getType()) >= 0 ? 1: -1;
-                    case "date":
-                        return o1.getDate().compareTo(o2.getDate()) >= 0 ? 1: -1;
-                    default:        // 默认采用时间排序
-                        return o1.getClicks() >= o2.getClicks() ? 1: -1;
-                }
-            }));
-            if(pageInfoDto.getAsc()) {
-                Collections.reverse(res);
-            }
+            
             catalog.setChildren(res);
+            catalog.setTotal(res.size());
             return  catalog;
         } catch(Exception error) {
             throw  error;

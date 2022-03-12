@@ -118,8 +118,8 @@ public class CatalogController {
 
     @ApiOperation(value = "根据 searchContent 查询目录，并且对 children 进行分页")
     @RequestMapping(value = "findByItems", method = RequestMethod.POST)
-    public BaseResponse findByItems(@RequestParam("id") String catalogId,  @RequestBody PageInfoDto pageInfoDto,
-                                                 @RequestParam("searchItem") String searchItem, @RequestParam("searchContent") String searchContent) {
+    public BaseResponse findByItems(@RequestParam("id") String catalogId, @RequestParam("item") String searchItem,
+                                    @RequestParam("content") String searchContent, @RequestBody PageInfoDto pageInfoDto) {
         try {
             Catalog catalog = catalogService.findByMultiItem(catalogId, pageInfoDto, searchItem, searchContent);
             if(catalog != null) {

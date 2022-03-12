@@ -25,7 +25,6 @@ public class Catalog {
     List<ChildrenData> children;    // 子文件和子文件夹
     int total;      // 文件数
     String userId;
-    String name;
     int level;
     Date date;
 }
