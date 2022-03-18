@@ -1,11 +1,13 @@
 package cn.geodata.service;
 
 import cn.geodata.dao.CatalogDao;
+import cn.geodata.dao.SingleFileDao;
 import cn.geodata.dao.UserDao;
 import cn.geodata.dto.PageInfoDto;
 import cn.geodata.entity.base.Catalog;
 import cn.geodata.entity.base.ChildrenData;
 import cn.geodata.entity.base.User;
+import cn.geodata.entity.data.SingleFile;
 import cn.geodata.utils.CompareUtil;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +30,9 @@ public class CatalogService {
 
     @Autowired
     UserDao userDao;
+
+    @Autowired
+    SingleFileDao singleFileDao;
 
     @Lazy
     @Autowired
@@ -122,34 +127,33 @@ public class CatalogService {
                    singleFileService.delete(childrenData.getId(), catalog.getId());
                }
            }
-           catalogDao.deleteById(id);
-           // if(catalogDao.removeCatalogById(id)) {
-           //     logger.info("delete catalog: " + catalog.toString());
-           // } else {
-           //     logger.info("delete catalog entity error.");
-           // }
+           // catalogDao.deleteById(id);
+           if(catalogDao.removeCatalogById(id) == 1) {
+               logger.info("delete catalog: " + catalog.toString());
+           } else {
+               logger.info("delete catalog entity error.");
+           }
            return Boolean.TRUE;
        } catch (Exception err) {
            logger.warning("delete catalog error: " + err.toString());
            return Boolean.FALSE;
        }
     }
-
     /**
      * @description: 修改目录的值，只能修改名字和描述，type = name || description
      * @author: Tian
      * @date: 2022/3/11 15:20
-     * @param parentId
+     * @param catalogId
      * @param id
-     * @param value
+     * @param content
      * @param type
      * @return: java.lang.Boolean
      */
-    public Boolean updateCatalog(String parentId, String id, String value, String type) {
+    public Boolean updateChildrenData(String catalogId, String id, String type, String content) {
         try{
-            Catalog parentCatalog = catalogDao.findOneById(parentId);
+            Catalog parentCatalog = catalogDao.findOneById(catalogId);
             if(parentCatalog == null) {
-                logger.warning("update catalog name with wrong parent id: " + parentId);
+                logger.warning("update catalog name with wrong parent id: " + catalogId);
                 return Boolean.FALSE;
             }
             Boolean flag = Boolean.FALSE;
@@ -158,9 +162,9 @@ public class CatalogService {
                 ChildrenData temp = iterator.next();
                 if (temp.getId().equals(id)) {
                     if(type.equals("name")) {
-                        temp.setName(value);
+                        temp.setName(content);
                     } else if(type.equals("description")) {
-                        temp.setDescription(value);
+                        temp.setDescription(content);
                     }
                     catalogDao.save(parentCatalog);
                     flag = Boolean.TRUE;
@@ -170,7 +174,7 @@ public class CatalogService {
             if(flag) {
                 return Boolean.TRUE;
             } else {
-                logger.warning("update catalog name with wrong id: " + parentId);
+                logger.warning("update catalog name with wrong id: " + catalogId);
                 return Boolean.FALSE;
             }
         } catch (Exception err) {
@@ -212,7 +216,7 @@ public class CatalogService {
      * @author: Tian
      * @date: 2022/3/4 14:36
      * @param catalogId
-     * @param pageInfoDto
+     * @param pageInfoDto page信息
      * @return: cn.geodata.entity.base.Catalog
      */
     public Catalog findByMultiItem(String catalogId, PageInfoDto pageInfoDto) {
@@ -261,6 +265,16 @@ public class CatalogService {
         }
     }
 
+    /**
+     * @description:
+     * @author: Tian
+     * @date: 2022/3/4 14:36
+     * @param catalogId
+     * @param pageInfoDto
+     * @param searchItem 搜索条目
+     * @param searchContent  搜索内容
+     * @return: cn.geodata.entity.base.Catalog
+     */
     public Catalog findByMultiItem(String catalogId, PageInfoDto pageInfoDto, String searchItem, String searchContent) {
         try {
             Catalog catalog = catalogDao.findOneById(catalogId);
@@ -307,12 +321,145 @@ public class CatalogService {
             }
             ChildrenData[] temp = Arrays.copyOfRange(arr, start, end);
             List<ChildrenData> res = Arrays.stream(temp).collect(Collectors.toList());
-            
+
             catalog.setChildren(res);
             catalog.setTotal(res.size());
             return  catalog;
         } catch(Exception error) {
             throw  error;
+        }
+    }
+
+    /**
+     * @description:
+     * @author: Tian
+     * @date: 2022/3/18 21:28
+     * @param catalogId
+     * @param id
+     * @return: cn.geodata.entity.base.ChildrenData
+     */
+    public ChildrenData findChildrenData(String catalogId, String id) {
+        try {
+            Catalog catalog = catalogDao.findOneById(catalogId);
+            if(catalog == null) {
+                logger.warning("find childrenData with wrong catalogId: " + catalogId);
+                return null;
+            }
+            List<ChildrenData> list = catalog.getChildren();
+            Iterator<ChildrenData> iterator = list.iterator();
+            Boolean flag = Boolean.FALSE;
+            ChildrenData childrenData = iterator.next();
+            while(childrenData != null) {
+                if(childrenData.getId().equals(id)) {
+                    flag = Boolean.TRUE;
+                    break;
+                }
+                childrenData = iterator.next();
+            }
+            if(flag) {
+                return  childrenData;
+            } else {
+                return  null;
+            }
+        } catch (Exception err) {
+            logger.warning("find childrenData wrong: " + err.toString());
+            throw err;
+        }
+    }
+
+    /**
+     * @description: 将其它目录下的一份文件发送到一个目录下
+     * @author: Tian
+     * @date: 2022/3/18 20:25
+     * @param catalogId
+     * @param childrenData
+     * @return: java.lang.Boolean
+     */
+    public Boolean copyFile(String catalogId, ChildrenData childrenData) {
+        try{
+            Catalog catalog = catalogDao.findOneById(catalogId);
+            if(catalog == null) {
+                logger.warning("copy file warning, Wrong catalogId:  " + catalogId);
+                return Boolean.FALSE;
+            }
+            SingleFile singleFile = singleFileDao.findOneById(childrenData.getId());
+            if(singleFile == null) {
+                logger.warning("copy file warning, Wrong childrenData.Id: " + childrenData.getId());
+                return  Boolean.FALSE;
+            }
+
+            // 更新目录和 singleFile 表
+            List<ChildrenData> list = catalog.getChildren();
+            list.add(childrenData);
+            catalog.setChildren(list);
+            Map<String, String> nameList = singleFile.getNameList();
+            nameList.put(catalogId, childrenData.getName());
+            singleFile.setNameList(nameList);
+            singleFile.setParentNumber(nameList.size());
+            singleFile.setUseNumber(singleFile.getUseNumber() + 1);
+
+            catalogDao.save(catalog);
+            singleFileDao.save(singleFile);
+            logger.info(String.format("copy file %d to catalog %d", childrenData.getId(), catalogId));
+            return Boolean.TRUE;
+        } catch (Exception err) {
+            logger.warning("copy file error: " + err.toString());
+            throw err;
+        }
+    }
+
+    /**
+     * @description: 递归复制一份目录树
+     * @author: Tian
+     * @date: 2022/3/18 21:20
+     * @param catalogId
+     * @param childrenData
+     * @return: java.lang.Boolean
+     */
+    public Boolean copyFolder(String catalogId, ChildrenData childrenData) {
+        try {
+            Boolean flag = Boolean.TRUE;
+
+            Catalog catalog = catalogDao.findOneById(catalogId);
+            if(catalog == null) {
+                logger.warning("copy Folder warning, Wrong catalogId:  " + catalogId);
+                return Boolean.FALSE;
+            }
+            Catalog childCatalog = catalogDao.findOneById(childrenData.getId());
+            if(childCatalog == null) {
+                logger.warning("copy Folder warning, Wrong childrenData.Id: " + childrenData.getId());
+                return Boolean.FALSE;
+            }
+            String oldId = childrenData.getId();
+
+            // 更改父目录
+            String newId = SnowflakeIdWorker.generateId2();
+            List<ChildrenData> list = catalog.getChildren();
+            list.add(childrenData);
+            catalog.setChildren(list);
+            catalogDao.save(catalog);
+
+            // 更改子目录
+            List<ChildrenData> childrenDataList = childCatalog.getChildren();
+            childCatalog.setChildren(new ArrayList<>());
+            childCatalog.setId(newId);
+            childCatalog.setParentId(catalogId);
+            catalogDao.save(childCatalog);
+            Iterator<ChildrenData> iterator = childrenDataList.iterator();
+            ChildrenData i = iterator.next();
+            while(i != null) {
+                if(i.getType().equals("file")) {
+                    flag = copyFile(newId, i) && flag;
+                } else {
+                    flag = copyFolder(newId, i) && flag;
+                    ;
+                }
+            }
+
+            return  flag;
+        } catch (Exception err) {
+            logger.warning("copy Folder error: " + err.toString());
+            throw err;
         }
     }
 }

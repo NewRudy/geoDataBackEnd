@@ -4,9 +4,11 @@ import cn.geodata.dao.CatalogDao;
 import cn.geodata.dto.CatalogDto;
 import cn.geodata.dto.PageInfoDto;
 import cn.geodata.entity.base.Catalog;
+import cn.geodata.entity.base.ChildrenData;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.filefilter.FalseFileFilter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import cn.geodata.service.CatalogService;
@@ -77,6 +79,21 @@ public class CatalogController {
     // @RequestMapping(method = "/update", method = RequestMethod.POST)
     // public  BaseResponse update(@RequestParam("catalogId") String catalogId, @RequestParam("id") String id, @RequestParam("name") String name, @RequestParam)
 
+    @ApiOperation(value = "修改目录下 children 里面的名字和描述")
+    @RequestMapping(value = "/update", method = RequestMethod.POST)
+    public BaseResponse updateChildrenData(@RequestParam("catalogId") String catalogId, @RequestParam("id") String id, @RequestParam("type") String type, @RequestParam("content") String content) {
+        try{
+            if(catalogService.updateChildrenData(catalogId, id, type, content)) {
+                return new BaseResponse(ResultStatusEnum.SUCCESS, "更改目录成功");
+            } else {
+                return new BaseResponse(ResultStatusEnum.FAILURE, "更改目录失败");
+            }
+        } catch (Exception err) {
+            logger.warning("/update for catalog is wrong: " + err.toString());
+            return new BaseResponse(ResultStatusEnum.FAILURE, "更改目录失败: " + err.toString());
+        }
+    }
+
     /**
      * @description:
      * @author: Tian
@@ -129,7 +146,45 @@ public class CatalogController {
             }
         } catch (Exception err) {
             logger.warning("/catalog get by id and page error: " + err.toString());
-            return new BaseResponse(ResultStatusEnum.FAILURE, "查询目录失败");
+            return new BaseResponse(ResultStatusEnum.FAILURE, "查询目录失败: " + err.toString());
         }
     }
+
+    @ApiOperation(value = "查询 childrenData")
+    @RequestMapping(value = "findChildrenData", method = RequestMethod.GET)
+    public BaseResponse findChildrenData(@RequestParam("catalogId") String catalogId, @RequestParam("id") String id) {
+        try {
+            ChildrenData childrenData = catalogService.findChildrenData(catalogId, id);
+            if(childrenData != null) {
+                return new BaseResponse(ResultStatusEnum.SUCCESS, "查询 childrenData 成功", childrenData);
+            } else {
+                return new BaseResponse(ResultStatusEnum.FAILURE, "查询 childrenData 失败" );
+            }
+        } catch (Exception err) {
+            logger.warning("/findChildrenData error: " + err.toString());
+            return new BaseResponse(ResultStatusEnum.FAILURE, "查询 childrenData 失败: " + err.toString());
+        }
+    }
+
+    @ApiOperation(value = "复制文件或文件夹")
+    @RequestMapping(value = "copy", method = RequestMethod.POST)
+    public BaseResponse copy(@RequestParam("catalogId") String catalogId, @RequestBody ChildrenData childrenData) {
+        try {
+            Boolean flag = Boolean.FALSE;
+            if(childrenData.getType().equals("file")) {
+                flag = catalogService.copyFile(catalogId, childrenData);
+            } else if (childrenData.getType().equals("folder")) {
+                flag = catalogService.copyFolder(catalogId, childrenData);
+            }
+            if(flag) {
+                return new BaseResponse(ResultStatusEnum.SUCCESS, "复制目录成功");
+            } else {
+                return new BaseResponse(ResultStatusEnum.FAILURE, "复制目录失败");
+            }
+        } catch (Exception err) {
+            logger.warning("/copy error: " + err.toString());
+            return new BaseResponse(ResultStatusEnum.FAILURE, "复制目录失败: " + err.toString());
+        }
+    }
+
 }
