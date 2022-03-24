@@ -430,7 +430,7 @@ public class CatalogService {
                 logger.warning("copy Folder warning, Wrong childrenData.Id: " + childrenData.getId());
                 return Boolean.FALSE;
             }
-            String oldId = childrenData.getId();
+            // String oldId = childrenData.getId();
 
             // 更改父目录
             String newId = SnowflakeIdWorker.generateId2();

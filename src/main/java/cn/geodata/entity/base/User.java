@@ -2,6 +2,7 @@ package cn.geodata.entity.base;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import org.bson.types.Binary;
 import org.springframework.data.annotation.Id;
 
 import java.util.Date;
@@ -22,4 +23,5 @@ public class User {
     String email;
     String institution;     // 用户可能了来自不同的机构
     Date date;
+    Binary picture; //头像二进制文件
 }

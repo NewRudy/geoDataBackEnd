@@ -5,6 +5,7 @@ import cn.geodata.dto.UserDto;
 import cn.geodata.entity.base.User;
 import cn.geodata.utils.JudgeUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.bson.types.Binary;
 import org.springframework.beans.factory.annotation.Autowired;
 import cn.geodata.utils.BASE64;
 import cn.geodata.utils.SnowflakeIdWorker;
@@ -43,7 +44,7 @@ public class UserService {
             if(userDto.getInstitution() == null) {
                 userDto.setInstitution("");
             }
-            User user = new User(SnowflakeIdWorker.generateId2(), SnowflakeIdWorker.generateId2(), userDto.getName(), BASE64.encryptBASE64(userDto.getPassword().getBytes()), userDto.getEmail(), userDto.getInstitution(), new Date());
+            User user = new User(SnowflakeIdWorker.generateId2(), SnowflakeIdWorker.generateId2(), userDto.getName(), BASE64.encryptBASE64(userDto.getPassword().getBytes()), userDto.getEmail(), userDto.getInstitution(), new Date(),new Binary(new byte[2]));
             userDao.insert(user);
             catalogService.createWithUser(user);
             logger.info("create user: " + user.toString());
@@ -68,7 +69,7 @@ public class UserService {
             if(userDao.findUserByName(name) != null) {
                 new Error("该用户名已经注册");
             }
-            User user = new User(SnowflakeIdWorker.generateId2(), SnowflakeIdWorker.generateId2(), name, BASE64.encryptBASE64(password.getBytes()), "", "", new Date());
+            User user = new User(SnowflakeIdWorker.generateId2(), SnowflakeIdWorker.generateId2(), name, BASE64.encryptBASE64(password.getBytes()), "", "", new Date(),new Binary(new byte[2]));
             userDao.insert(user);
             catalogService.createWithUser(user);
             logger.info("create user: " + user.toString());
@@ -94,7 +95,7 @@ public class UserService {
             if(userDao.findUserByNameAndInstitution(name, institution) != null) {
                 new Error("该用户名及机构已经注册");
             }
-            User user = new User(SnowflakeIdWorker.generateId2(), SnowflakeIdWorker.generateId2(), name, BASE64.encryptBASE64(password.getBytes()), email, institution, new Date());
+            User user = new User(SnowflakeIdWorker.generateId2(), SnowflakeIdWorker.generateId2(), name, BASE64.encryptBASE64(password.getBytes()), email, institution, new Date(),new Binary(new byte[2]));
             userDao.insert(user);
             catalogService.createWithUser(user);
             logger.info("create user: " + user.toString());
@@ -124,6 +125,23 @@ public class UserService {
     }
 
     public User login(String name, String password, String institution) throws Exception {
+        try {
+            nullJudge(name, password);
+            User user = userDao.findUserByNameAndInstitution(name, institution);
+            if(user==null) {
+                throw new Error("user is null.");
+            }
+            if(BASE64.encryptBASE64(password.getBytes()) == user.getPassword()) {
+                return user;
+            } else {
+                throw new Error("password is not right");
+            }
+        } catch (Exception err) {
+            throw err;
+        }
+    }
+
+    public User change(String name, String password, String institution) throws Exception {
         try {
             nullJudge(name, password);
             User user = userDao.findUserByNameAndInstitution(name, institution);
