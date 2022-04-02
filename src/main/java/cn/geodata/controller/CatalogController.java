@@ -151,7 +151,7 @@ public class CatalogController {
     }
 
     @ApiOperation(value = "查询 childrenData")
-    @RequestMapping(value = "findChildrenData", method = RequestMethod.GET)
+    @RequestMapping(value = "/findChildrenData", method = RequestMethod.GET)
     public BaseResponse findChildrenData(@RequestParam("catalogId") String catalogId, @RequestParam("id") String id) {
         try {
             ChildrenData childrenData = catalogService.findChildrenData(catalogId, id);
@@ -167,7 +167,7 @@ public class CatalogController {
     }
 
     @ApiOperation(value = "复制文件或文件夹")
-    @RequestMapping(value = "copy", method = RequestMethod.POST)
+    @RequestMapping(value = "/copy", method = RequestMethod.POST)
     public BaseResponse copy(@RequestParam("catalogId") String catalogId, @RequestBody ChildrenData childrenData) {
         try {
             Boolean flag = Boolean.FALSE;

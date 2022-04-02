@@ -116,4 +116,10 @@ public class SingleFileController {
             return new BaseResponse(ResultStatusEnum.FAILURE, "查询文件失败");
         }
     }
+
+    @ApiOperation("自动压缩并下载文件夹")
+    @RequestMapping(value = "/downloadFolder", method = RequestMethod.GET)
+    public void downloadFolder(@RequestParam("id") String id, @RequestParam("catalogId") String catalogId, HttpServletResponse response, @RequestParam(value = "type", required = false) String type) throws Exception {
+        singleFileService.downloadFolder(id, catalogId, response, type);
+    }
 }

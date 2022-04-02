@@ -3,4 +3,4 @@ spring:
     mongodb:
       uri: mongodb://127.0.0.1/geodata
 
-resourcePath: E:/Test
+resourcePath: F:/Test
