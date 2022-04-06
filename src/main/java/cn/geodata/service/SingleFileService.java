@@ -6,6 +6,7 @@ import cn.geodata.entity.base.Catalog;
 import cn.geodata.entity.base.ChildrenData;
 import cn.geodata.entity.data.SingleFile;
 import cn.geodata.enums.ContentTypeEnum;
+import cn.geodata.utils.ZipUtils;
 import com.google.common.collect.Lists;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +22,8 @@ import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.logging.Logger;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @Slf4j
 @Service
@@ -213,4 +216,61 @@ public class SingleFileService {
             return Boolean.FALSE;
         }
     }
+    public boolean downloadFolder(String id, String catalogId, HttpServletResponse response, String type) throws Exception {
+        //寻找所有子文件,未判断的放入CL，判断为文件的放入FL，判断为文件夹的，子文件全部放入CL
+
+        int ci=0;//指向下一个空位
+        String[] fileList=new String[100];
+        String[] fileListName=new String[100];
+        int fi=0;
+        Catalog catalog=catalogDao.findOneById(id);
+        List<ChildrenData> children = new ArrayList<ChildrenData>(catalog.getChildren());
+        System.out.println("child size="+children.size());
+//        for(int i=0;i<catalog.getChildren().size();i++)
+//        {//一股脑丢进来
+//            childList[ci++]=children.get(i).getId();
+//        }
+
+        for (int i=0;i<children.size();i++)
+        {
+
+            if(children.get(i).getType().equals("file"))
+            {//文件放入fileList,文件夹则把元素全部放到children里面
+                System.out.println("我进来啦");
+                fileList[fi]=children.get(i).getId();
+                fileListName[fi]=children.get(i).getName();
+                fi++;
+            }
+            else {
+                String folderId=children.get(i).getId();
+                System.out.println(folderId);
+                Catalog childFolder;
+                childFolder=catalogDao.findOneById(folderId);
+
+                children.addAll(childFolder.getChildren());
+
+            }
+        }//构建FL
+        String path=resourcePath + "/singleFile/";
+
+        List<File> zipFileList=new ArrayList<File>();
+
+        for (int i=0;i<fi;i++)
+        {
+            if (fileList[i]==null){
+                break;
+            }
+
+            File fileIt=new File(path+fileList[i]);
+            zipFileList.add(fileIt);//压缩文件包构建
+        }
+        System.out.println("file number="+zipFileList.size());
+        File zipFile=new File(path+fileList[0]+"01.zip");//暂存的压缩文件
+
+        ZipUtils.zipFiles(response,zipFileList,zipFile,fileListName);
+
+
+        return true;
+    }
+
 }
