@@ -79,9 +79,24 @@ public class CatalogController {
     // @RequestMapping(method = "/update", method = RequestMethod.POST)
     // public  BaseResponse update(@RequestParam("catalogId") String catalogId, @RequestParam("id") String id, @RequestParam("name") String name, @RequestParam)
 
+    @ApiOperation(value = "修改目录下 children 里面的名字和描述中的一个")
+    @RequestMapping(value = "/updateOne", method = RequestMethod.POST)
+    public BaseResponse updateChildrenDataOne(@RequestParam("catalogId") String catalogId, @RequestParam("id") String id, @RequestParam("type") String type, @RequestParam("content") String content) {
+        try{
+            if(catalogService.updateChildrenDataOne(catalogId, id, type, content)) {
+                return new BaseResponse(ResultStatusEnum.SUCCESS, "更改目录成功");
+            } else {
+                return new BaseResponse(ResultStatusEnum.FAILURE, "更改目录失败");
+            }
+        } catch (Exception err) {
+            logger.warning("/update for catalog is wrong: " + err.toString());
+            return new BaseResponse(ResultStatusEnum.FAILURE, "更改目录失败: " + err.toString());
+        }
+    }
+
     @ApiOperation(value = "修改目录下 children 里面的名字和描述")
     @RequestMapping(value = "/update", method = RequestMethod.POST)
-    public BaseResponse updateChildrenData(@RequestParam("catalogId") String catalogId, @RequestParam("id") String id, @RequestParam("type") String type, @RequestParam("content") String content) {
+    public BaseResponse updateChildrenData(@RequestParam("catalogId") String catalogId, @RequestParam("id") String id, @RequestParam("name") String type, @RequestParam("description") String content) {
         try{
             if(catalogService.updateChildrenData(catalogId, id, type, content)) {
                 return new BaseResponse(ResultStatusEnum.SUCCESS, "更改目录成功");

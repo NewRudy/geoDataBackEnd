@@ -149,7 +149,7 @@ public class CatalogService {
      * @param type
      * @return: java.lang.Boolean
      */
-    public Boolean updateChildrenData(String catalogId, String id, String type, String content) {
+    public Boolean updateChildrenDataOne(String catalogId, String id, String type, String content) {
         try{
             Catalog parentCatalog = catalogDao.findOneById(catalogId);
             if(parentCatalog == null) {
@@ -166,6 +166,47 @@ public class CatalogService {
                     } else if(type.equals("description")) {
                         temp.setDescription(content);
                     }
+                    catalogDao.save(parentCatalog);
+                    flag = Boolean.TRUE;
+                    break;
+                }
+            }
+            if(flag) {
+                return Boolean.TRUE;
+            } else {
+                logger.warning("update catalog name with wrong id: " + catalogId);
+                return Boolean.FALSE;
+            }
+        } catch (Exception err) {
+            logger.warning("update catalog name error: " + err.toString());
+            throw err;
+        }
+    }
+
+    /**
+     * @description: 修改目录的值的名字和描述
+     * @author: Tian
+     * @date: 2022/3/11 15:20
+     * @param catalogId
+     * @param id
+     * @param name
+     * @param description
+     * @return: java.lang.Boolean
+     */
+    public Boolean updateChildrenData(String catalogId, String id, String name, String description) {
+        try{
+            Catalog parentCatalog = catalogDao.findOneById(catalogId);
+            if(parentCatalog == null) {
+                logger.warning("update catalog name with wrong parent id: " + catalogId);
+                return Boolean.FALSE;
+            }
+            Boolean flag = Boolean.FALSE;
+            Iterator<ChildrenData> iterator = parentCatalog.getChildren().iterator();
+            while (iterator.hasNext()) {
+                ChildrenData temp = iterator.next();
+                if (temp.getId().equals(id)) {
+                    temp.setName(name);
+                    temp.setDescription(description);
                     catalogDao.save(parentCatalog);
                     flag = Boolean.TRUE;
                     break;
