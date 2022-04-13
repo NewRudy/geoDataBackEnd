@@ -371,6 +371,8 @@ public class CatalogService {
         }
     }
 
+
+
     /**
      * @description:
      * @author: Tian
@@ -408,6 +410,7 @@ public class CatalogService {
         }
     }
 
+
     /**
      * @description: 将其它目录下的一份文件发送到一个目录下
      * @author: Tian
@@ -441,7 +444,7 @@ public class CatalogService {
 
             catalogDao.save(catalog);
             singleFileDao.save(singleFile);
-            logger.info(String.format("copy file %d to catalog %d", childrenData.getId(), catalogId));
+            logger.info(String.format("copy file %s to catalog %s", childrenData.getId(), catalogId));
             return Boolean.TRUE;
         } catch (Exception err) {
             logger.warning("copy file error: " + err.toString());
@@ -471,11 +474,11 @@ public class CatalogService {
                 logger.warning("copy Folder warning, Wrong childrenData.Id: " + childrenData.getId());
                 return Boolean.FALSE;
             }
-            // String oldId = childrenData.getId();
 
-            // 更改父目录
             String newId = SnowflakeIdWorker.generateId2();
+            // 更改父目录
             List<ChildrenData> list = catalog.getChildren();
+            childrenData.setId(newId);
             list.add(childrenData);
             catalog.setChildren(list);
             catalogDao.save(catalog);
@@ -486,14 +489,12 @@ public class CatalogService {
             childCatalog.setId(newId);
             childCatalog.setParentId(catalogId);
             catalogDao.save(childCatalog);
-            Iterator<ChildrenData> iterator = childrenDataList.iterator();
-            ChildrenData i = iterator.next();
-            while(i != null) {
-                if(i.getType().equals("file")) {
-                    flag = copyFile(newId, i) && flag;
+            for(int i = 0; i < childrenDataList.size(); ++i) {
+                ChildrenData temp = childrenDataList.get(i);
+                if(temp.getType().equals("file")) {
+                    flag = copyFile(newId, temp) && flag;
                 } else {
-                    flag = copyFolder(newId, i) && flag;
-                    ;
+                    flag = copyFolder(newId, temp) && flag;
                 }
             }
 

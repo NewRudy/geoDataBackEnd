@@ -71,7 +71,7 @@ public class SingleFileService {
                 Map<String, String> nameList = singleFile.getNameList();
                 nameList.put(catalogId, name);
                 singleFile.setNameList(nameList);
-                singleFile.setParentNumber(nameList.size());
+                singleFile.setParentNumber(singleFile.getParentNumber() + 1);
                 singleFile.setUseNumber(singleFile.getUseNumber() + 1);
                 catalogService.updateWithFile(singleFile.getId(), name, catalogId, description);
                 singleFileDao.save(singleFile);
